@@ -1,0 +1,36 @@
+% function find_outliers									    (A1)
+function outlier_indices = find_outliers(x, cp, w)
+    cp_detected = findchangepts(x, 'MaxNumChanges', cp, 'Statistic', 'mean');
+    outlier_indices = [];
+    for k = 1:length(cp_detected)-1
+        segment = x(cp_detected(k)+1:cp_detected(k+1));
+        median_segment = median(segment);
+        mad_segment = median(abs(segment - median_segment));
+        for m = 1:length(segment)
+            if abs(segment(m) - median_segment) > 3 * mad_segment
+                outlier_indices = [outlier_indices, cp_detected(k) + m];
+             end
+        end
+    end
+end
+
+% replace_outliers_with_nan 								    (A2)
+function nan_data = replace_outliers_with_nan(x, outlier_indices)
+    nan_data = x;
+    nan_data(outlier_indices) = NaN;
+end
+
+% function apply_median_filter 								   (A3)
+function sm_data = apply_median_filter(nan_data, w)
+    sm_data = nan_data;
+    nan_indices = isnan(nan_data);
+    nan_locations = find(nan_indices);
+    for k = 1:length(nan_locations)
+        nan_index = nan_locations(k);
+        window_start = max(floor(nan_index - w/2), 1);
+        window_end = min(ceil(nan_index + w/2), length(nan_data));
+        window_data = nan_data(window_start:window_end);
+        median_value = median(window_data, 'omitnan');
+        sm_data(nan_index) = median_value;
+    end
+end
